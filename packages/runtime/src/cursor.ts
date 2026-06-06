@@ -89,6 +89,19 @@ export function parseJsonLoose<T = unknown>(text: string): T {
   throw new Error(`[runtime] could not parse JSON from model output: ${text.slice(0, 200)}`);
 }
 
+/**
+ * List the models available to the authenticated Cursor key (id + aliases). Use this
+ * to discover the exact Composer 2.5 id and set CURSOR_MODEL. Needs CURSOR_API_KEY.
+ */
+export async function cursorListModels(): Promise<Array<{ id: string; displayName: string; aliases?: string[] }>> {
+  if (!process.env.CURSOR_API_KEY) {
+    throw new Error("[runtime] CURSOR_API_KEY not set — required to list Cursor models");
+  }
+  const { Cursor } = await import("@cursor/sdk");
+  const models = await Cursor.models.list();
+  return models.map((m) => ({ id: m.id, displayName: m.displayName, aliases: m.aliases }));
+}
+
 /** Reasoning turn that returns parsed JSON. */
 export async function cursorReason<T = unknown>(prompt: string, opts: CursorOptions = {}): Promise<T> {
   const text = await cursorGenerate(

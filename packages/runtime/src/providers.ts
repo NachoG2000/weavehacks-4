@@ -26,7 +26,9 @@ export function getProviders(): Record<ProviderName, ProviderConfig> {
     cursor: {
       name: "cursor",
       apiKey: process.env.CURSOR_API_KEY,
-      defaultModel: process.env.CURSOR_MODEL ?? "composer-2",
+      // Composer 2.5 is the current coding model. Exact id isn't published in the docs;
+      // confirm with `pnpm --filter @weavehacks/api models` and override via CURSOR_MODEL.
+      defaultModel: process.env.CURSOR_MODEL ?? "composer-2.5",
       openaiCompatible: false,
     },
     openai: {

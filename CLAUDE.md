@@ -101,6 +101,7 @@ pnpm health       # Redis ping + Weave hello-world (also: GET /health on the api
 pnpm baseline     # run the SOLO agent alone (watch it fail)
 pnpm compare      # THE SCOREBOARD: solo vs team, numeric delta (also: GET /compare)
 pnpm demo         # narrated 3-min demo: catch contradiction → resolve/escalate → the number
+pnpm --filter @weavehacks/api models         # list Cursor model ids your key can use (find Composer 2.5)
 pnpm --filter @weavehacks/api agent:check   # prove the Cursor runtime end-to-end (needs CURSOR_API_KEY)
 pnpm typecheck    # turbo typecheck (tsc --noEmit) across all packages
 pnpm build        # turbo build (next build for web; typecheck gate for packages)

@@ -1,5 +1,5 @@
 export { generate, reason, createClient, describeRuntime, type GenerateOptions } from "./client";
-export { cursorGenerate, cursorReason, parseJsonLoose, type CursorOptions } from "./cursor";
+export { cursorGenerate, cursorReason, cursorListModels, parseJsonLoose, type CursorOptions } from "./cursor";
 export {
   getProviders,
   providerForRole,
