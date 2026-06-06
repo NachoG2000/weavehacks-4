@@ -14,6 +14,9 @@
 
 import type { MenuItem } from "@weavehacks/truth";
 
+// Real Le Kyoto POS daily-service records + train/holdout split (the forecast data contract).
+export * from "./pos";
+
 /** A single POS order line (flattened for the demo). */
 export interface Order {
   /** ISO date */

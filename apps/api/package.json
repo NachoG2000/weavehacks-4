@@ -9,6 +9,7 @@
     "health": "tsx src/health.ts",
     "seed": "tsx src/seed.ts",
     "baseline": "tsx src/baseline.ts",
+    "forecast": "tsx src/forecast.ts",
     "compare": "tsx src/compare.ts",
     "demo": "tsx src/demo.ts",
     "ask": "tsx src/ask.ts",
@@ -19,6 +20,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@weavehacks/agents": "workspace:*",
     "@weavehacks/observability": "workspace:*",
     "@weavehacks/orchestration": "workspace:*",
     "@weavehacks/runtime": "workspace:*",

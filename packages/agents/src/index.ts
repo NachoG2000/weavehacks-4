@@ -16,3 +16,14 @@ export {
   type RoleManifest,
   type Station,
 } from "./roles";
+
+// PREP station: deterministic naive forecaster + backtest (the SOLO demand baseline).
+export {
+  naiveForecast,
+  backtest,
+  type Forecaster,
+  type ForecastQuery,
+  type Forecast,
+  type ProductPrediction,
+  type BacktestMetrics,
+} from "./prep";
