@@ -3,12 +3,18 @@
   "globalEnv": [
     "NODE_ENV",
     "PORT",
+    "CURSOR_API_KEY",
+    "CURSOR_MODEL",
+    "CURSOR_STATE_DIR",
+    "RUNTIME_PROVIDER",
     "OPENAI_API_KEY",
     "WANDB_API_KEY",
     "WANDB_INFERENCE_BASE_URL",
     "WEAVE_PROJECT",
     "REDIS_URL",
-    "NEXT_PUBLIC_API_URL"
+    "LIVE",
+    "NEXT_PUBLIC_API_URL",
+    "NEXT_PUBLIC_WEAVE_PROJECT"
   ],
   "tasks": {
     "dev": {

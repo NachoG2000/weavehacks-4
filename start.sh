@@ -54,7 +54,7 @@ prompt_key(){
     warn "non-interactive shell — set ${key} in .env manually"
   fi
 }
-prompt_key OPENAI_API_KEY "runtime agents (OpenAI)"
+prompt_key CURSOR_API_KEY "runtime agents (Cursor Agents SDK)"
 prompt_key WANDB_API_KEY  "Weave observability (mandatory for the scoreboard)"
 prompt_key REDIS_URL      "shared agent state + pub/sub"
 

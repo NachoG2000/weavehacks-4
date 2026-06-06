@@ -15,7 +15,8 @@ in Weave.** So the spine is built around exactly that:
   changes escalate to a human). No project-specific concepts.
 - **`packages/observability`** — W&B Weave wrapper + a **solo-vs-team comparison harness**
   that runs the same scenario two ways and reports a numeric difference.
-- **`packages/runtime`** — inference client(s) + provider config (OpenAI day one).
+- **`packages/runtime`** — inference. Default = **Cursor Agents SDK** (`@cursor/sdk`, billed
+  to Cursor — no OpenAI tokens needed); OpenAI / W&B Inference switchable via `RUNTIME_PROVIDER`.
 - **`packages/shared`** — shared types/utils + Redis client (shared agent state + pub/sub).
 - **`apps/api`** — orchestration runtime entrypoint (HTTP `/health`, `/compare`; the
   `baseline`/`compare`/`demo` scripts).
@@ -42,10 +43,12 @@ pnpm health         # Redis ping + Weave hello-world
 pnpm baseline       # run the SOLO agent alone
 pnpm compare        # the SCOREBOARD: solo vs team, numeric delta
 pnpm demo           # narrated demo: catch the contradiction, resolve/escalate, score
+pnpm --filter @weavehacks/api agent:check   # prove the Cursor runtime (needs CURSOR_API_KEY)
 ```
 
 Requirements: Node 20+, pnpm, Docker (for Redis; otherwise bring your own `REDIS_URL`).
-Copy `.env.example` → `.env` and fill in `OPENAI_API_KEY` and `WANDB_API_KEY`.
+Copy `.env.example` → `.env` and fill in `CURSOR_API_KEY` (runtime agents) and `WANDB_API_KEY`
+(Weave). The deterministic scoreboard (`pnpm compare`/`demo`) runs with no keys at all.
 
 ## Status
 

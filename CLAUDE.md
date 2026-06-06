@@ -54,17 +54,18 @@ domain-tied agent roles, any UI beyond a neutral shell. These live as empty plac
    work is blocked on it.
 2. **(If B) Sharpen the thesis:** what exactly does a solo agent get WRONG about improving
    the vector DB that a team gets right? If we can't answer this, B is weaker than A.
-3. **RUNTIME PROVIDER STRATEGY:** Default OpenAI for all runtime agents day one. Open:
-   whether to also use W&B Inference as a second runtime provider via role-based routing
-   (cheap/fast for high-frequency agents, stronger for verifier/orchestrator). Both are
-   OpenAI-compatible (one client, two base URLs). Only worth it if it maps to ROLES.
-   Ask before wiring the second one.
-4. **AGENT FRAMEWORK:** OpenAI Agents SDK vs direct API calls. Default to whatever most
-   simply shows conflict resolution. Ask if unsure.
-   - _Team lean (2026-06-06): OpenAI Agents SDK — NOT yet confirmed, NOT yet wired._ Note:
-     Cursor is a BUILD tool, not a runtime agent framework — it is not an option here. The
-     orchestration core is framework-agnostic (`Agent` = `role` + `act()`), so either choice
-     drops in. Confirm and wire only after the A/B choice.
+3. **RUNTIME PROVIDER — RESOLVED (2026-06-06):** Runtime LLM = **Cursor Agents SDK**
+   (`@cursor/sdk`), billed on Cursor's pricing (the team has no OpenAI tokens). OpenAI and
+   W&B Inference stay as switchable fallbacks via `RUNTIME_PROVIDER=openai|wandb` (both
+   OpenAI-compatible). Role-based routing still lives in `providerForRole()` if we later want
+   a cheaper model for high-frequency agents.
+4. **AGENT FRAMEWORK — RESOLVED (2026-06-06):** **Cursor Agents SDK.** Correction to an
+   earlier note: Cursor is NOT just a build tool — it shipped a programmatic TypeScript SDK
+   (Apr 2026) that runs its agent runtime headlessly. Product agents are single-shot Cursor
+   agents that REASON and return an answer (not code edits): `runtime.reason(prompt, {role})`.
+   The orchestration core is framework-agnostic, so domain agents drop straight in after A/B.
+
+Still open: **#1 (A or B)** and **#2 (sharpen B's thesis, if B).**
 
 When you hit any open decision, STOP and ask a concise question rather than guessing.
 
@@ -75,9 +76,10 @@ When you hit any open decision, STOP and ask a concise question rather than gues
 - **Keep the core domain-agnostic.** `packages/orchestration` and `packages/observability`
   must NEVER leak Project A or B concepts (no restaurant/menu/surface, no vector/retrieval terms).
   Domain code goes in `packages/_project-a|b` only, and only after the decision.
-- **Credits power RUNTIME product agents, not build tooling.** OpenAI ($50) + W&B ($50) fund
-  the agents inside the product. Don't point Cursor/Codex/Claude Code (build tools, paid
-  separately) at these keys. Don't make LLM calls in health checks/scaffolding.
+- **Runtime LLM = Cursor SDK (billed to Cursor).** This is the team's choice (no OpenAI
+  tokens). The OpenAI ($50) + W&B ($50) inference credits are unused by default but remain
+  available via `RUNTIME_PROVIDER`. Either way: do NOT make LLM calls in health
+  checks/scaffolding — no burning runtime usage (Cursor or credits) on tooling.
 - **Every agent needs a clear role and at least ONE conflict with another agent, or it doesn't
   ship.** No decorative parallel agents.
 - **Verifier-type roles validate SEMANTICALLY**, not just "did it run?".
@@ -99,6 +101,7 @@ pnpm health       # Redis ping + Weave hello-world (also: GET /health on the api
 pnpm baseline     # run the SOLO agent alone (watch it fail)
 pnpm compare      # THE SCOREBOARD: solo vs team, numeric delta (also: GET /compare)
 pnpm demo         # narrated 3-min demo: catch contradiction → resolve/escalate → the number
+pnpm --filter @weavehacks/api agent:check   # prove the Cursor runtime end-to-end (needs CURSOR_API_KEY)
 pnpm typecheck    # turbo typecheck (tsc --noEmit) across all packages
 pnpm build        # turbo build (next build for web; typecheck gate for packages)
 pnpm format       # prettier
@@ -122,9 +125,10 @@ pnpm + Turborepo monorepo. TypeScript ESM throughout; packages export `src/*.ts`
 - **`packages/observability`** — `initWeave()` + `traced()` (defensive: no-ops without a key)
   wrap every agent call/resolution. `compareSoloVsTeam()` is the scoreboard: runs the same
   scenario two ways, traces both, returns `{ solo, team, delta }`.
-- **`packages/runtime`** — OpenAI-compatible inference. `generate()` routes by role via
-  `providerForRole()` (today: always OpenAI — OPEN DECISION #3). `describeRuntime()` reports
-  config without spending credits.
+- **`packages/runtime`** — inference. Default provider = **Cursor SDK** (`cursorGenerate` /
+  `reason` → single-shot reasoning, returns text/JSON, billed to Cursor). OpenAI / W&B
+  Inference are switchable via `RUNTIME_PROVIDER`. `generate()` / `reason()` route by role
+  through `providerForRole()`. `describeRuntime()` reports config without spending usage.
 - **`packages/shared`** — `createRedis()`, `loadRootEnv()` (walks up to the workspace root),
   and cross-cutting types (`Scoreboard`, `RunResult`).
 - **`apps/api`** — orchestration runtime entrypoint. HTTP `/health` + `/compare`, and the

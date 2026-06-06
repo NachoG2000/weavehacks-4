@@ -25,3 +25,6 @@ coverage/
 
 # next.js generated (regenerated on dev/build)
 next-env.d.ts
+
+# cursor agents sdk local state (JSONL store / scratch cwd)
+.cursor-agents/

@@ -1,2 +1,9 @@
-export { createClient, generate, describeRuntime, type GenerateOptions } from "./client";
-export { getProviders, providerForRole, type ProviderName, type ProviderConfig } from "./providers";
+export { generate, reason, createClient, describeRuntime, type GenerateOptions } from "./client";
+export { cursorGenerate, cursorReason, parseJsonLoose, type CursorOptions } from "./cursor";
+export {
+  getProviders,
+  providerForRole,
+  defaultProvider,
+  type ProviderName,
+  type ProviderConfig,
+} from "./providers";
