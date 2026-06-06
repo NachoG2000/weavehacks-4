@@ -12,6 +12,7 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
+    "ask": "pnpm --filter @weavehacks/api ask",
     "health": "pnpm --filter @weavehacks/api health",
     "baseline": "pnpm --filter @weavehacks/api baseline",
     "compare": "pnpm --filter @weavehacks/api compare",

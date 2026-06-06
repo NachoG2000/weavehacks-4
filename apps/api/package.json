@@ -10,6 +10,7 @@
     "baseline": "tsx src/baseline.ts",
     "compare": "tsx src/compare.ts",
     "demo": "tsx src/demo.ts",
+    "ask": "tsx src/ask.ts",
     "agent:check": "tsx src/agent-check.ts",
     "models": "tsx src/models.ts",
     "build": "tsc --noEmit",
