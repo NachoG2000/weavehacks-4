@@ -61,6 +61,10 @@ domain-tied agent roles, any UI beyond a neutral shell. These live as empty plac
    Ask before wiring the second one.
 4. **AGENT FRAMEWORK:** OpenAI Agents SDK vs direct API calls. Default to whatever most
    simply shows conflict resolution. Ask if unsure.
+   - _Team lean (2026-06-06): OpenAI Agents SDK — NOT yet confirmed, NOT yet wired._ Note:
+     Cursor is a BUILD tool, not a runtime agent framework — it is not an option here. The
+     orchestration core is framework-agnostic (`Agent` = `role` + `act()`), so either choice
+     drops in. Confirm and wire only after the A/B choice.
 
 When you hit any open decision, STOP and ask a concise question rather than guessing.
 
