@@ -26,6 +26,6 @@
     "typescript": "^5.7.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "sqlite3"]
+    "onlyBuiltDependencies": ["esbuild"]
   }
 }

@@ -54,9 +54,8 @@ prompt_key(){
     warn "non-interactive shell — set ${key} in .env manually"
   fi
 }
-prompt_key CURSOR_API_KEY "runtime agents (Cursor Agents SDK)"
-prompt_key WANDB_API_KEY  "Weave observability (mandatory for the scoreboard)"
-prompt_key REDIS_URL      "shared agent state + pub/sub"
+prompt_key WANDB_API_KEY "Weave observability + W&B Inference runtime agents (one key, both)"
+prompt_key REDIS_URL     "shared agent state + pub/sub"
 
 # ── 4/6  Redis ──────────────────────────────────────────────────────────────
 bold "▸ 4/6  Redis"

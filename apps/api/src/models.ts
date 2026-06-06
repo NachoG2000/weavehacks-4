@@ -1,25 +1,23 @@
 import { fileURLToPath } from "node:url";
 import { loadRootEnv } from "@weavehacks/shared";
-import { cursorListModels } from "@weavehacks/runtime";
+import { listInferenceModels, describeRuntime } from "@weavehacks/runtime";
 
 loadRootEnv();
 
 /**
- * List the Cursor models your API key can use, with ids + aliases. Use it to find the
- * exact Composer 2.5 id, then set CURSOR_MODEL in .env. Needs CURSOR_API_KEY.
+ * List the model ids your provider exposes (W&B Inference by default), so you can set
+ * WANDB_INFERENCE_MODEL to a valid one. Needs WANDB_API_KEY.
  */
 export async function listModels(): Promise<void> {
-  if (!process.env.CURSOR_API_KEY) {
-    console.log("[models] CURSOR_API_KEY not set — add it to .env first (cursor.com/dashboard/integrations).");
+  const rt = describeRuntime();
+  if (rt.default === "wandb" && !rt.wandbConfigured) {
+    console.log("[models] WANDB_API_KEY not set — add it to .env (https://wandb.ai/authorize).");
     return;
   }
-  const models = await cursorListModels();
-  console.log(`\n=== Cursor models available to your key (${models.length}) ===`);
-  for (const m of models) {
-    const aliases = m.aliases?.length ? `  [aliases: ${m.aliases.join(", ")}]` : "";
-    console.log(`  ${m.id}${aliases}  — ${m.displayName}`);
-  }
-  console.log("\nSet the one you want as CURSOR_MODEL in .env (e.g. the Composer 2.5 id).");
+  const ids = await listInferenceModels();
+  console.log(`\n=== Models available on '${rt.default}' (${ids.length}) ===`);
+  for (const id of ids) console.log(`  ${id}`);
+  console.log("\nSet the one you want as WANDB_INFERENCE_MODEL in .env.");
 }
 
 // Run directly: `pnpm --filter @weavehacks/api models`

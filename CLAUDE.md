@@ -54,16 +54,21 @@ domain-tied agent roles, any UI beyond a neutral shell. These live as empty plac
    work is blocked on it.
 2. **(If B) Sharpen the thesis:** what exactly does a solo agent get WRONG about improving
    the vector DB that a team gets right? If we can't answer this, B is weaker than A.
-3. **RUNTIME PROVIDER — RESOLVED (2026-06-06):** Runtime LLM = **Cursor Agents SDK**
-   (`@cursor/sdk`), billed on Cursor's pricing (the team has no OpenAI tokens). OpenAI and
-   W&B Inference stay as switchable fallbacks via `RUNTIME_PROVIDER=openai|wandb` (both
-   OpenAI-compatible). Role-based routing still lives in `providerForRole()` if we later want
-   a cheaper model for high-frequency agents.
-4. **AGENT FRAMEWORK — RESOLVED (2026-06-06):** **Cursor Agents SDK.** Correction to an
-   earlier note: Cursor is NOT just a build tool — it shipped a programmatic TypeScript SDK
-   (Apr 2026) that runs its agent runtime headlessly. Product agents are single-shot Cursor
-   agents that REASON and return an answer (not code edits): `runtime.reason(prompt, {role})`.
-   The orchestration core is framework-agnostic, so domain agents drop straight in after A/B.
+3. **RUNTIME PROVIDER — RESOLVED (2026-06-06):** Runtime LLM = **W&B Inference**
+   (OpenAI-compatible, base URL `https://api.inference.wandb.ai/v1`), authenticated with the
+   **same W&B API key** that powers Weave — so the granted W&B Inference credits fund the
+   product agents. OpenAI proper is a switchable fallback (`RUNTIME_PROVIDER=openai`). Model
+   id via `WANDB_INFERENCE_MODEL` (discover with the `models` command). Optional
+   `WANDB_PROJECT` ("entity/project") sets the `openai-project` usage header. Role-based
+   routing still lives in `providerForRole()` if we later want a cheaper model per role.
+   _(Cursor was evaluated and dropped: the SDK needs a paid/usage-billed Cursor plan, which
+   we don't have — `@cursor/sdk` and its native sqlite3 build were removed.)_
+4. **AGENT FRAMEWORK — RESOLVED (2026-06-06):** **OpenAI Agents SDK** (`@openai/agents`),
+   pointed at W&B Inference via `setDefaultOpenAIClient` + `setOpenAIAPI('chat_completions')`.
+   Its built-in tracing is DISABLED (`setTracingDisabled(true)`) — it would upload to OpenAI
+   and need an OpenAI key; we trace with Weave. A product agent is `runtime.runAgent({ name,
+   instructions, input })` (or `reasonAgent` for JSON). The orchestration core is
+   framework-agnostic, so domain agents drop straight onto this after A/B.
 
 Still open: **#1 (A or B)** and **#2 (sharpen B's thesis, if B).**
 
@@ -76,10 +81,9 @@ When you hit any open decision, STOP and ask a concise question rather than gues
 - **Keep the core domain-agnostic.** `packages/orchestration` and `packages/observability`
   must NEVER leak Project A or B concepts (no restaurant/menu/surface, no vector/retrieval terms).
   Domain code goes in `packages/_project-a|b` only, and only after the decision.
-- **Runtime LLM = Cursor SDK (billed to Cursor).** This is the team's choice (no OpenAI
-  tokens). The OpenAI ($50) + W&B ($50) inference credits are unused by default but remain
-  available via `RUNTIME_PROVIDER`. Either way: do NOT make LLM calls in health
-  checks/scaffolding — no burning runtime usage (Cursor or credits) on tooling.
+- **Runtime LLM = W&B Inference (spends the W&B Inference credits).** Authenticated with the
+  same `WANDB_API_KEY` as Weave; OpenAI is a switchable fallback. Do NOT make LLM calls in
+  health checks/scaffolding — no burning credits on tooling.
 - **Every agent needs a clear role and at least ONE conflict with another agent, or it doesn't
   ship.** No decorative parallel agents.
 - **Verifier-type roles validate SEMANTICALLY**, not just "did it run?".
@@ -101,8 +105,8 @@ pnpm health       # Redis ping + Weave hello-world (also: GET /health on the api
 pnpm baseline     # run the SOLO agent alone (watch it fail)
 pnpm compare      # THE SCOREBOARD: solo vs team, numeric delta (also: GET /compare)
 pnpm demo         # narrated 3-min demo: catch contradiction → resolve/escalate → the number
-pnpm --filter @weavehacks/api models         # list Cursor model ids your key can use (find Composer 2.5)
-pnpm --filter @weavehacks/api agent:check   # prove the Cursor runtime end-to-end (needs CURSOR_API_KEY)
+pnpm --filter @weavehacks/api models         # list W&B Inference model ids your key can use
+pnpm --filter @weavehacks/api agent:check   # prove the runtime end-to-end (OpenAI Agents SDK over W&B Inference)
 pnpm typecheck    # turbo typecheck (tsc --noEmit) across all packages
 pnpm build        # turbo build (next build for web; typecheck gate for packages)
 pnpm format       # prettier
@@ -126,10 +130,11 @@ pnpm + Turborepo monorepo. TypeScript ESM throughout; packages export `src/*.ts`
 - **`packages/observability`** — `initWeave()` + `traced()` (defensive: no-ops without a key)
   wrap every agent call/resolution. `compareSoloVsTeam()` is the scoreboard: runs the same
   scenario two ways, traces both, returns `{ solo, team, delta }`.
-- **`packages/runtime`** — inference. Default provider = **Cursor SDK** (`cursorGenerate` /
-  `reason` → single-shot reasoning, returns text/JSON, billed to Cursor). OpenAI / W&B
-  Inference are switchable via `RUNTIME_PROVIDER`. `generate()` / `reason()` route by role
-  through `providerForRole()`. `describeRuntime()` reports config without spending usage.
+- **`packages/runtime`** — inference. Default = **W&B Inference** via the **OpenAI Agents
+  SDK** (`runAgent` / `reasonAgent` in agents.ts; the SDK is pointed at W&B's base URL with
+  `setDefaultOpenAIClient` + chat-completions, and its own tracing is disabled in favor of
+  Weave). `generate()` / `reason()` (client.ts) are the lighter raw chat-completions path.
+  OpenAI is switchable via `RUNTIME_PROVIDER`. `describeRuntime()` reports config without spending credits.
 - **`packages/shared`** — `createRedis()`, `loadRootEnv()` (walks up to the workspace root),
   and cross-cutting types (`Scoreboard`, `RunResult`).
 - **`apps/api`** — orchestration runtime entrypoint. HTTP `/health` + `/compare`, and the

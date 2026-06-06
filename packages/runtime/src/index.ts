@@ -1,5 +1,13 @@
-export { generate, reason, createClient, describeRuntime, type GenerateOptions } from "./client";
-export { cursorGenerate, cursorReason, cursorListModels, parseJsonLoose, type CursorOptions } from "./cursor";
+export {
+  generate,
+  reason,
+  createClient,
+  describeRuntime,
+  listInferenceModels,
+  type GenerateOptions,
+} from "./client";
+export { configureAgents, runAgent, reasonAgent, type RunAgentOptions } from "./agents";
+export { parseJsonLoose } from "./json";
 export {
   getProviders,
   providerForRole,

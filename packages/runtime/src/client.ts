@@ -1,21 +1,20 @@
 import OpenAI from "openai";
 import { getProviders, providerForRole, defaultProvider, type ProviderName } from "./providers";
-import { cursorGenerate, parseJsonLoose } from "./cursor";
+import { parseJsonLoose } from "./json";
 
-/** Construct an OpenAI-compatible client (OpenAI or W&B Inference). Not for Cursor. */
-export function createClient(provider: ProviderName): OpenAI {
+/** Construct an OpenAI-compatible client (W&B Inference or OpenAI). */
+export function createClient(provider: ProviderName = defaultProvider()): OpenAI {
   const cfg = getProviders()[provider];
-  if (!cfg.openaiCompatible) {
-    throw new Error(`[runtime] provider '${provider}' is not OpenAI-compatible — use its native client`);
-  }
   if (!cfg.apiKey) {
     throw new Error(`[runtime] missing API key for provider '${provider}' — set it in .env`);
   }
-  return new OpenAI({ apiKey: cfg.apiKey, baseURL: cfg.baseURL });
+  // W&B Inference uses the openai-project header for usage attribution when set.
+  const defaultHeaders = cfg.project ? { "OpenAI-Project": cfg.project } : undefined;
+  return new OpenAI({ apiKey: cfg.apiKey, baseURL: cfg.baseURL, defaultHeaders });
 }
 
 export interface GenerateOptions {
-  /** the calling agent's role — drives provider routing (OPEN DECISION #3) */
+  /** the calling agent's role — drives provider routing */
   role?: string;
   /** force a specific provider for this call */
   provider?: ProviderName;
@@ -25,19 +24,14 @@ export interface GenerateOptions {
 }
 
 /**
- * Single reasoning turn for a runtime agent. Dispatches to the Cursor SDK (default)
- * or an OpenAI-compatible provider. Wrap calls with observability.traced() so every
- * agent call lands in Weave.
+ * Single reasoning turn via raw chat completions (the lightweight path; the OpenAI
+ * Agents SDK path lives in agents.ts). Wrap calls with observability.traced().
  */
 export async function generate(prompt: string, opts: GenerateOptions = {}): Promise<string> {
   const provider = opts.provider ?? (opts.role ? providerForRole(opts.role) : defaultProvider());
-
-  if (provider === "cursor") {
-    return cursorGenerate(prompt, { model: opts.model, system: opts.system });
-  }
-
   const cfg = getProviders()[provider];
   const client = createClient(provider);
+
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
   if (opts.system) messages.push({ role: "system", content: opts.system });
   messages.push({ role: "user", content: prompt });
@@ -50,7 +44,7 @@ export async function generate(prompt: string, opts: GenerateOptions = {}): Prom
   return res.choices[0]?.message?.content ?? "";
 }
 
-/** Reasoning turn that returns parsed JSON (provider-agnostic). */
+/** Reasoning turn that returns parsed JSON (provider-agnostic, raw chat completions). */
 export async function reason<T = unknown>(prompt: string, opts: GenerateOptions = {}): Promise<T> {
   const text = await generate(
     `${prompt}\n\nRespond with ONLY valid JSON — no prose, no code fences.`,
@@ -59,15 +53,24 @@ export async function reason<T = unknown>(prompt: string, opts: GenerateOptions 
   return parseJsonLoose<T>(text);
 }
 
+/** List model ids the provider exposes (W&B Inference / OpenAI /models endpoint). */
+export async function listInferenceModels(provider: ProviderName = defaultProvider()): Promise<string[]> {
+  const client = createClient(provider);
+  const page = await client.models.list();
+  return page.data.map((m) => m.id).sort();
+}
+
 /** Describe runtime config WITHOUT making an API call (health checks must not burn credits). */
 export function describeRuntime() {
   const p = getProviders();
   return {
     default: defaultProvider(),
-    cursorConfigured: Boolean(p.cursor.apiKey),
-    openaiConfigured: Boolean(p.openai.apiKey),
+    framework: "openai-agents-sdk",
     wandbConfigured: Boolean(p.wandb.apiKey),
-    cursorModel: p.cursor.defaultModel,
-    note: "Runtime LLM = Cursor SDK (billed to Cursor; no OpenAI tokens needed). Switch with RUNTIME_PROVIDER=openai|wandb.",
+    openaiConfigured: Boolean(p.openai.apiKey),
+    wandbModel: p.wandb.defaultModel,
+    wandbBaseURL: p.wandb.baseURL,
+    wandbProject: p.wandb.project ?? null,
+    note: "Runtime = W&B Inference (OpenAI-compatible) via the OpenAI Agents SDK. Switch with RUNTIME_PROVIDER=openai.",
   };
 }

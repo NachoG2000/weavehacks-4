@@ -1,46 +1,48 @@
 import { fileURLToPath } from "node:url";
 import { loadRootEnv } from "@weavehacks/shared";
 import { initWeave, traced } from "@weavehacks/observability";
-import { reason, describeRuntime } from "@weavehacks/runtime";
+import { runAgent, describeRuntime } from "@weavehacks/runtime";
 
 loadRootEnv();
 
 /**
- * Proves the Cursor runtime works end-to-end: ONE in-role reasoning turn, traced in
- * Weave. This is the unit the (post-A/B) domain agents are built from — each agent's
- * act() calls runtime.reason(...) exactly like this. The orchestration core then
- * combines these turns into the multi-agent conflict loop.
+ * Proves the runtime end-to-end: ONE OpenAI-Agents-SDK agent run over W&B Inference,
+ * traced in Weave. This is the unit the (post-A/B) domain agents are built from — each
+ * agent's act() calls runtime.runAgent(...) like this; the orchestration core combines
+ * the turns into the multi-agent conflict loop.
  *
- * Needs CURSOR_API_KEY and costs a small amount of Cursor usage. NOT run by
- * health/start.sh (those must not burn credits).
+ * Needs WANDB_API_KEY and spends a little W&B Inference credit. NOT run by health/start.sh.
  */
 export async function agentCheck(): Promise<void> {
   await initWeave();
   const rt = describeRuntime();
 
-  if (rt.default === "cursor" && !rt.cursorConfigured) {
-    console.log("[agent:check] CURSOR_API_KEY not set — add it to .env to test the Cursor runtime.");
+  if (rt.default === "wandb" && !rt.wandbConfigured) {
+    console.log("[agent:check] WANDB_API_KEY not set — add it to .env (https://wandb.ai/authorize).");
     console.log("              runtime config:", JSON.stringify(rt, null, 2));
     return;
   }
 
-  console.log(`[agent:check] sending one in-role reasoning turn via '${rt.default}' (model ${rt.cursorModel})…`);
+  console.log(`[agent:check] running one OpenAI-Agents-SDK agent via '${rt.default}' (model ${rt.wandbModel})…`);
 
-  // A VERIFIER-role turn over a neutral conflict (no domain concepts).
-  const verify = traced("agent.verifier", (input: { prompt: string }) =>
-    reason<{ winner: string; reason: string }>(input.prompt, { role: "verifier" }),
+  const verify = traced("agent.verifier", (input: string) =>
+    runAgent({
+      name: "Verifier",
+      instructions:
+        "You are a VERIFIER agent resolving a conflict. The rule: the agent CLOSEST TO THE " +
+        "SOURCE OF TRUTH (highest authority) wins. Reply with ONLY a JSON object " +
+        '{"winner": <value>, "reason": <one sentence>}.',
+      input,
+    }),
   );
 
-  const out = await verify({
-    prompt:
-      "You are a VERIFIER agent resolving a conflict. record_1 has two competing claims: " +
-      "'available' from an agent with authority 100 (closest to the source of truth), and " +
-      "'sold_out' from an agent with authority 10. The rule: the agent closest to the source " +
-      'of truth wins. Return {"winner": <value>, "reason": <one sentence>}.',
-  });
+  const out = await verify(
+    "record_1 has two competing claims: 'available' from an agent with authority 100 " +
+      "(closest to the source of truth), and 'sold_out' from an agent with authority 10. " +
+      "Which value wins, and why?",
+  );
 
-  console.log("[agent:check] Cursor agent replied:");
-  console.log(JSON.stringify(out, null, 2));
+  console.log("[agent:check] agent replied:\n" + out);
 }
 
 // Run directly: `pnpm --filter @weavehacks/api agent:check`
