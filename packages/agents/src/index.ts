@@ -56,7 +56,9 @@ export {
   conditionsSentence,
   actualTotalItems,
   trainBefore,
+  selfImproveSplit,
   type Conditions,
+  type SelfImproveSplit,
   GROUNDING_TOOLS,
   getFactsTool,
   FACTS,
@@ -90,6 +92,20 @@ export {
   type PurchaseEvalResult,
   type PurchaseEvalOptions,
 } from "./purchasing-eval";
+
+// Two-phase self-improvement loop (actor + judge-coach: learn on month 1, test on unseen month 2).
+export {
+  runSelfImprove,
+  runSelfImproveSeries,
+  type SelfImproveResult,
+  type SelfImproveOptions,
+  type SelfImproveSeriesResult,
+  type SelfImproveSeriesOptions,
+  type SeriesRound,
+  type CorrectionRule,
+  type ConditionResidual,
+  type TestRow,
+} from "./self-improve";
 
 // Content → Critic grounding loop (the hero: solo hallucinates, the team's Critic gates).
 export { scoreGrounding, type Claim, type ContentDraft, type GroundingResult, type Ungrounded } from "./grounding";

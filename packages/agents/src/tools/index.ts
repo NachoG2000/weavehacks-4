@@ -36,5 +36,9 @@ export {
   conditionsSentence,
   actualTotalItems,
   trainBefore,
+  servicesInRange,
+  addDaysISO,
+  selfImproveSplit,
   type Conditions,
+  type SelfImproveSplit,
 } from "./pos-analytics";

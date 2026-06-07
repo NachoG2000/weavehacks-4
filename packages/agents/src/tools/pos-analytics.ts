@@ -359,3 +359,45 @@ export function actualTotalItems(r: ServiceRecord): number {
 export function trainBefore(cutoff: string): ServiceRecord[] {
   return RECORDS.filter((r) => r.date < cutoff);
 }
+
+/** Services in [fromInclusive, toExclusive) (toExclusive omitted ⇒ to the end). */
+export function servicesInRange(fromInclusive: string, toExclusive?: string): ServiceRecord[] {
+  return RECORDS.filter((r) => r.date >= fromInclusive && (toExclusive === undefined || r.date < toExclusive));
+}
+
+/** Add `days` to an ISO date (exported so the series harness can build sliding windows). */
+export function addDaysISO(iso: string, days: number): string {
+  return addDays(iso, days);
+}
+
+export interface SelfImproveSplit {
+  /** feedback window = [feedbackStart, testStart); test window = [testStart, end] */
+  feedbackStart: string;
+  testStart: string;
+  end: string;
+  /** services before the feedback window — the actor's starting knowledge */
+  history: ServiceRecord[];
+  /** the "learn" month: actor predicts these, judge sees the misses */
+  feedback: ServiceRecord[];
+  /** the unseen "test" month: graded with the judge's corrections */
+  test: ServiceRecord[];
+}
+
+/**
+ * Three ordered windows for the self-improvement experiment: history → feedback month → test
+ * month. The judge learns on `feedback` and we grade on `test` (which neither actor nor judge
+ * ever saw) — study last month's answers, sit a fresh exam.
+ */
+export function selfImproveSplit(weeks = 4): SelfImproveSplit {
+  const end = RECORDS[RECORDS.length - 1]?.date ?? "";
+  const testStart = end ? addDays(end, -weeks * 7 + 1) : "";
+  const feedbackStart = end ? addDays(testStart, -weeks * 7) : "";
+  return {
+    feedbackStart,
+    testStart,
+    end,
+    history: RECORDS.filter((r) => r.date < feedbackStart),
+    feedback: RECORDS.filter((r) => r.date >= feedbackStart && r.date < testStart),
+    test: RECORDS.filter((r) => r.date >= testStart),
+  };
+}

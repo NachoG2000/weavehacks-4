@@ -26,10 +26,15 @@ export async function runModelEvaluation(spec: ModelEvaluationSpec): Promise<unk
   await initWeave();
   if (!isWeaveActive()) return null; // no key → skip the UI eval; the caller's own scoreboard still stands
 
-  const dataset = new weave.Dataset({ name: `${spec.evaluation}-dataset`, rows: spec.rows as any });
-  const scorers = Object.entries(spec.scorers).map(([name, fn]) => weave.op(fn as any, { name }));
-  const model = weave.op(async ({ datasetRow }: any) => spec.predict(datasetRow), { name: spec.model });
-
-  const evaluation = new weave.Evaluation({ name: spec.evaluation, dataset, scorers } as any);
-  return evaluation.evaluate({ model: model as any });
+  try {
+    const dataset = new weave.Dataset({ name: `${spec.evaluation}-dataset`, rows: spec.rows as any });
+    const scorers = Object.entries(spec.scorers).map(([name, fn]) => weave.op(fn as any, { name }));
+    const model = weave.op(async ({ datasetRow }: any) => spec.predict(datasetRow), { name: spec.model });
+    const evaluation = new weave.Evaluation({ name: spec.evaluation, dataset, scorers } as any);
+    return await evaluation.evaluate({ model: model as any });
+  } catch (e) {
+    // Best-effort: a Weave logging hiccup must never crash the run (the caller's own numbers stand).
+    console.warn(`[weave] evaluation "${spec.evaluation}/${spec.model}" failed to log: ${(e as Error).message}`);
+    return null;
+  }
 }

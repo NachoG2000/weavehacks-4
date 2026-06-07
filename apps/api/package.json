@@ -17,6 +17,7 @@
     "content:eval": "tsx src/content-eval.ts",
     "purchasing": "tsx src/purchasing.ts",
     "purchasing:eval": "tsx src/purchasing-eval.ts",
+    "improve": "tsx src/improve.ts",
     "demo": "tsx src/demo.ts",
     "ask": "tsx src/ask.ts",
     "agent:check": "tsx src/agent-check.ts",
