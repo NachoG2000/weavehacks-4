@@ -15,6 +15,7 @@ export {
   getEventsTool,
   getMenuTool,
 } from "./realtime";
+export { GROUNDING_TOOLS, getFactsTool, FACTS, factById, type Fact } from "./facts";
 export {
   baselineDemand,
   baselineDay,

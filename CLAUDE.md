@@ -202,8 +202,11 @@ pnpm seed         # load + validate the curated seed slice (no LLM, no credits)
 pnpm prep         # ⭐ the Brigade discussion: Chef→Historian+Scout→Prep, live (real LLMs, traced)
 pnpm baseline     # run the SOLO agent alone (deterministic stand-in scenario)
 pnpm compare      # the stand-in scoreboard: solo vs team, numeric delta (also: GET /compare)
-pnpm eval         # ⭐ REAL solo-vs-team forecast eval on a recent holdout (no args = FREE naive;
+pnpm eval         # solo-vs-team FORECAST eval on a recent holdout (no args = FREE naive;
                   #   'pnpm eval all' adds solo+team LLM arms; logs Weave Evaluations to compare)
+pnpm content ["brief"]   # ⭐ the Content→Critic hero loop live: solo vs the gated team, grounding jump
+pnpm content:eval        # ⭐ HEADLINE: solo/solo_grounded/team grounding eval (deterministic %),
+                         #   logs a Weave "content-grounding" Evaluation. Spends inference.
 pnpm demo         # narrated stand-in demo: catch contradiction → resolve/escalate → the number
 pnpm ask "..."    # one-off free-form prompt through the configured runtime (spends credits)
 pnpm --filter @weavehacks/api models       # list runtime model ids your key can use

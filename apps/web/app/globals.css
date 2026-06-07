@@ -1,35 +1,56 @@
 :root {
-  --bg: #0b0d10;
-  --panel: #14181d;
-  --border: #232a31;
-  --text: #e6edf3;
-  --muted: #8b98a5;
-  --accent: #4ade80;
-  --warn: #fbbf24;
+  /* warm "between-services kitchen" palette — see DESIGN.md */
+  --paper: oklch(0.975 0.008 80);
+  --surface: oklch(0.993 0.005 85);
+  --surface-2: oklch(0.958 0.01 78);
+  --ink: oklch(0.26 0.018 60);
+  --ink-soft: oklch(0.44 0.015 60);
+  --muted: oklch(0.58 0.012 65);
+  --line: oklch(0.9 0.012 75);
+  --accent: oklch(0.62 0.17 42);
+  --accent-ink: oklch(0.45 0.16 40);
+  --accent-bg: oklch(0.95 0.035 55);
+  --up: oklch(0.52 0.1 150);
+  --down: oklch(0.52 0.07 50);
+  --warn: oklch(0.66 0.13 75);
+  --warn-bg: oklch(0.96 0.04 85);
+  --nori: oklch(0.3 0.03 165);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
 }
 
 a {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 code {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  background: #0f1318;
+  font-size: 0.88em;
+  background: var(--surface-2);
   padding: 0.1em 0.4em;
-  border-radius: 4px;
-  font-size: 0.9em;
+  border-radius: 5px;
+}
+
+::selection {
+  background: var(--accent-bg);
 }

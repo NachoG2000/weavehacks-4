@@ -13,6 +13,8 @@
     "forecast": "tsx src/forecast.ts",
     "compare": "tsx src/compare.ts",
     "eval": "tsx src/eval.ts",
+    "content": "tsx src/content.ts",
+    "content:eval": "tsx src/content-eval.ts",
     "demo": "tsx src/demo.ts",
     "ask": "tsx src/ask.ts",
     "agent:check": "tsx src/agent-check.ts",

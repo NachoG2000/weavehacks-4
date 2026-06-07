@@ -1,37 +1,355 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import s from "./app.module.css";
+import {
+  RESTAURANT,
+  TARGET,
+  brief,
+  signals,
+  reconciliation,
+  proof,
+  prep,
+  draftPost,
+  roster,
+  sources,
+  activity,
+  chatSeed,
+  suggestions,
+  replyFor,
+  type Agent,
+  type ChatMsg,
+} from "./data";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-const WEAVE_PROJECT = process.env.NEXT_PUBLIC_WEAVE_PROJECT ?? "weavehacks-4";
+const WEAVE_URL =
+  process.env.NEXT_PUBLIC_WEAVE_URL ?? "https://wandb.ai/ignaciongarcia00-empirical/weavehacks-4/weave";
 
 interface Resolution {
   key: string;
   status: "resolved" | "escalated";
   value?: string;
-  winner?: string;
   reason?: string;
 }
-interface RunDetail {
-  score: number;
-  correct: number;
-  total: number;
-  breakdown: Record<string, string>;
-  conflicts?: number;
-  resolutions?: Resolution[];
-}
 interface Scoreboard {
-  name: string;
   solo: number;
   team: number;
   delta: number;
-  soloDetail?: RunDetail;
-  teamDetail?: RunDetail;
+  teamDetail?: { resolutions?: Resolution[] };
 }
-
 const pct = (n: number) => `${Math.round(n * 100)}%`;
 
 export default function Home() {
+  return (
+    <div className={s.shell}>
+      <TopBar />
+      <main className={s.wrap}>
+        <Overview />
+        <Brigade />
+        <Sources />
+        <Proof />
+      </main>
+      <div className={s.wrap}>
+        <footer className={s.footer}>
+          Hardcoded preview of {RESTAURANT.name}&apos;s brigade. The Chef&apos;s call, the roster and the
+          prep sheet are what the live agents produce from your POS, reviews, weather and fixtures. The
+          Proof panel below is live from the orchestration runtime, every figure traces to Weave.
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+function TopBar() {
+  return (
+    <header className={s.topbar}>
+      <div className={s.brand}>
+        <span className={s.wordmark}>{RESTAURANT.name}</span>
+        <span className={s.brigadeTag}>Brigade</span>
+      </div>
+      <nav className={s.nav}>
+        <a className={s.navLink} href="#overview">
+          Overview
+        </a>
+        <a className={s.navLink} href="#brigade">
+          Brigade
+        </a>
+        <a className={s.navLink} href="#sources">
+          Sources
+        </a>
+        <a className={s.navLink} href="#proof">
+          Proof
+        </a>
+      </nav>
+      <div className={s.topRight}>
+        <span className={s.statusPill}>
+          <span className={s.dot} />
+          Brigade on shift
+        </span>
+        <a className={s.navLink} href={WEAVE_URL} target="_blank" rel="noreferrer">
+          Weave
+        </a>
+        <span className={s.avatar}>LK</span>
+      </div>
+    </header>
+  );
+}
+
+function Overview() {
+  return (
+    <section id="overview" className={s.block}>
+      <div className={s.grid}>
+        <div>
+          <div className={s.briefHead}>
+            <span className={s.chefMark}>C</span>
+            <div>
+              <div className={s.chefName}>Chef</div>
+              <div className={s.chefSub}>orchestrating Historian, Scout & Prep · {TARGET.weekday}, {TARGET.dateLabel}</div>
+            </div>
+          </div>
+
+          <h1 className={s.headline}>
+            {brief.headline.pre}
+            <em>{brief.headline.em}</em>
+            {brief.headline.post}
+          </h1>
+          <div className={s.briefBody}>
+            {brief.body.map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
+          </div>
+          <p className={s.grounding}>
+            <span className={s.groundDot} />
+            {brief.grounding}
+          </p>
+
+          <div className={s.sub}>
+            <h2 className={s.subLabel}>What is different about tonight</h2>
+            <div className={s.signals}>
+              {signals.map((sig) => (
+                <div className={s.signal} key={sig.label}>
+                  <div>
+                    <div className={s.sigLabel}>{sig.label}</div>
+                    <div className={s.sigSource}>{sig.source}</div>
+                  </div>
+                  <span className={s.sigEffect}>
+                    {sig.effect}
+                    <span className={s.arrow}>{sig.dir === "up" ? "↑" : "↓"}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className={s.sub}>
+            <h2 className={s.subLabel}>How the brigade landed on it</h2>
+            <div className={s.voices}>
+              <Voice v={reconciliation.historian} />
+              <Voice v={reconciliation.scout} />
+              <Voice v={reconciliation.prep} resolved />
+            </div>
+            <div className={s.proof} style={{ marginTop: 24 }}>
+              <div className={s.proofBars}>
+                <Bar who="One agent (average Friday)" err={proof.soloErr} kind="solo" />
+                <Bar who="The brigade" err={proof.teamErr} kind="team" />
+              </div>
+              <p className={s.proofLine}>{proof.line}</p>
+              <p className={s.proofNote}>{proof.onTheNight}</p>
+            </div>
+          </div>
+
+          <div className={s.sub}>
+            <h2 className={s.subLabel}>Tonight&apos;s prep sheet</h2>
+            <table className={s.prepTable}>
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Normal Fri</th>
+                  <th>Tonight</th>
+                  <th>Change</th>
+                </tr>
+              </thead>
+              <tbody>
+                {prep.map((row) => {
+                  const d = Math.round(((row.rec - row.normal) / row.normal) * 100);
+                  return (
+                    <tr key={row.item}>
+                      <td className={s.prepItem}>
+                        {row.item}
+                        <span className={s.prepDriver}>{row.driver}</span>
+                      </td>
+                      <td className={s.prepNormal}>{row.normal}</td>
+                      <td className={s.prepRec}>{row.rec}</td>
+                      <td className={`${s.delta} ${d >= 0 ? s.deltaUp : s.deltaDown}`}>
+                        {d >= 0 ? "+" : ""}
+                        {d}%
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className={s.sub}>
+            <h2 className={s.subLabel}>Waiting on your sign-off</h2>
+            <DraftPost />
+          </div>
+        </div>
+
+        <aside className={s.rail}>
+          <Chat />
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+function Voice({ v, resolved }: { v: { role: string; claim: string; basis: string }; resolved?: boolean }) {
+  return (
+    <div className={`${s.voice} ${resolved ? s.voiceResolved : ""}`}>
+      <div className={s.voiceRole}>{v.role}</div>
+      <div className={s.voiceClaim}>
+        {v.claim}
+        <span className={s.voiceBasis}>{v.basis}</span>
+      </div>
+    </div>
+  );
+}
+
+function Bar({ who, err, kind }: { who: string; err: number; kind: "solo" | "team" }) {
+  return (
+    <div className={s.proofItem}>
+      <div className={s.proofTop}>
+        <span className={s.proofWho}>{who}</span>
+        <span className={s.proofErr}>off by {err}%</span>
+      </div>
+      <div className={s.track}>
+        <div className={`${s.fill} ${kind === "solo" ? s.fillSolo : s.fillTeam}`} style={{ width: `${err * 3}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function DraftPost() {
+  const [approved, setApproved] = useState(false);
+  return (
+    <div className={s.hitl}>
+      <div className={s.hitlHead}>⚑ Draft post · {draftPost.channels} · not sent yet</div>
+      <p className={s.hitlPost}>&ldquo;{draftPost.text}&rdquo;</p>
+      <p className={s.hitlMeta}>{draftPost.why}</p>
+      <div className={s.hitlActions}>
+        {approved ? (
+          <span className={s.approved}>✓ Approved, queued for 18:30</span>
+        ) : (
+          <>
+            <button className={`${s.btn} ${s.btnPrimary}`} onClick={() => setApproved(true)}>
+              Approve &amp; schedule
+            </button>
+            <button className={`${s.btn} ${s.btnGhost}`} onClick={() => setApproved(false)}>
+              Edit first
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Brigade() {
+  const tiers: { key: Agent["tier"]; label: string }[] = [
+    { key: "hero", label: "On shift tonight" },
+    { key: "breadth", label: "Standby" },
+    { key: "coda", label: "Dormant" },
+  ];
+  return (
+    <section id="brigade" className={s.block}>
+      <p className={s.kicker}>The team</p>
+      <h2 className={s.blockTitle}>Your brigade of {roster.length} agents</h2>
+      <div className={s.activity}>
+        {activity.map((a) => (
+          <div className={s.activityItem} key={a.label}>
+            <span className={s.activityValue}>{a.value}</span>
+            <span className={s.activityLabel}>{a.label}</span>
+          </div>
+        ))}
+      </div>
+      {tiers.map((t) => {
+        const members = roster.filter((r) => r.tier === t.key);
+        if (!members.length) return null;
+        return (
+          <div className={s.tier} key={t.key}>
+            <p className={s.tierLabel}>{t.label}</p>
+            {members.map((a) => (
+              <AgentRow key={a.id} a={a} />
+            ))}
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+function AgentRow({ a }: { a: Agent }) {
+  const statClass = a.status === "active" ? s.statActive : a.status === "standby" ? s.statStandby : s.statDormant;
+  return (
+    <div className={s.agentRow}>
+      <div className={s.agentHead}>
+        <span className={s.agentName}>{a.name}</span>
+        <span className={s.agentAuth}>auth {a.authority}</span>
+      </div>
+      <div>
+        <p className={s.agentDoes}>{a.does}</p>
+        <p className={s.agentConflict}>
+          <b>Conflict:</b> {a.conflict}
+        </p>
+      </div>
+      <div className={s.agentRight}>
+        <span className={`${s.stat} ${statClass}`}>
+          <span className={s.statDot} />
+          {a.status}
+        </span>
+        {a.sensitive && <span className={s.sensitive}>needs your sign-off</span>}
+      </div>
+    </div>
+  );
+}
+
+function Sources() {
+  return (
+    <section id="sources" className={s.block}>
+      <div className={s.twoCol}>
+        <div>
+          <p className={s.kicker}>Grounding</p>
+          <h2 className={s.blockTitle}>Connected sources</h2>
+          <div>
+            {sources.map((src) => (
+              <div className={s.sourceRow} key={src.name}>
+                <span className={`${s.srcDot} ${src.connected ? s.srcOn : ""}`} />
+                <span className={s.sourceName}>{src.name}</span>
+                <span className={s.sourceRole}>{src.role}</span>
+                <span className={s.switch} role="switch" aria-checked={src.connected} aria-label={src.name} />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <p className={s.kicker}>Why it matters</p>
+          <h2 className={s.blockTitle}>No ungrounded numbers</h2>
+          <p className={s.muted} style={{ marginBottom: 14 }}>
+            Agents never invent a quantity. Every claim reaches data only through a tool over one of
+            these sources, so the Critic can trace it back or send it for a rewrite.
+          </p>
+          <p className={s.muted}>
+            That is the difference between a chatbot that sounds confident and a brigade you can act on.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Proof() {
   const [board, setBoard] = useState<Scoreboard | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,142 +373,146 @@ export default function Home() {
   }, [run]);
 
   return (
-    <main style={{ maxWidth: 920, margin: "0 auto", padding: "56px 24px 80px" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
+    <section id="proof" className={s.block}>
+      <div className={s.proofHeadRow}>
         <div>
-          <p style={{ color: "var(--warn)", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", margin: 0 }}>
-            Brigade · Le Kyoto · stand-in scenario
-          </p>
-          <h1 style={{ fontSize: 30, margin: "6px 0 2px", lineHeight: 1.1 }}>Single agent vs. agent team</h1>
-          <p style={{ color: "var(--muted)", fontSize: 15, marginTop: 0 }}>
-            Same scenario, run two ways. Every agent call and conflict resolution is traced in Weave.
-          </p>
+          <p className={s.kicker}>System eval · live from the runtime</p>
+          <h2 className={s.blockTitle} style={{ margin: 0 }}>
+            One agent vs. the team
+          </h2>
         </div>
-        <button onClick={run} disabled={loading} style={btnStyle(loading)}>
+        <button className={`${s.btn} ${s.btnGhost}`} onClick={run} disabled={loading}>
           {loading ? "Running…" : "Re-run"}
         </button>
-      </header>
+      </div>
+      <p className={s.muted} style={{ marginBottom: 20 }}>
+        The same scenario run two ways through the orchestration core, scored against the source of
+        truth. This is the number the project is judged on, traced live in Weave.
+      </p>
 
       {error && (
-        <p style={{ color: "#f87171", fontSize: 14, marginTop: 24 }}>
-          {error} — is the API up? Run <code>pnpm dev</code> (api on :3001).
+        <p className={s.err}>
+          {error}. Start the runtime with <code>pnpm dev</code> (API on :3001), then re-run.
         </p>
       )}
 
       {board && (
-        <>
-          {/* Delta hero */}
-          <section style={{ ...panel, marginTop: 28, display: "flex", alignItems: "center", justifyContent: "center", gap: 28, padding: "28px 24px" }}>
-            <Score label="Single agent" value={pct(board.solo)} tone="bad" />
-            <div style={{ fontSize: 22, color: "var(--muted)" }}>→</div>
-            <Score label="Agent team" value={pct(board.team)} tone="good" />
-            <div style={{ width: 1, height: 56, background: "var(--border)" }} />
-            <div style={{ textAlign: "center" }}>
-              <div style={{ color: "var(--muted)", fontSize: 12, textTransform: "uppercase", letterSpacing: 1 }}>Delta</div>
-              <div style={{ fontSize: 40, fontWeight: 800, color: "var(--accent)" }}>
-                {board.delta >= 0 ? "+" : ""}
-                {Math.round(board.delta * 100)}
-              </div>
-              <div style={{ color: "var(--muted)", fontSize: 12 }}>points</div>
-            </div>
-          </section>
-
-          {/* Side-by-side breakdowns */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
-            <Column title="Solo agent" subtitle="no roles · last-write-wins" detail={board.soloDetail} />
-            <Column title="Agent team" subtitle="roles + verifier + conflict resolution" detail={board.teamDetail} />
+        <div className={s.proof}>
+          <div className={s.proofBars}>
+            <ScoreBar who="Single agent" score={board.solo} kind="solo" />
+            <ScoreBar who="Agent team" score={board.team} kind="team" />
           </div>
-
-          {/* The star moment */}
+          <p className={s.proofLine}>
+            Team beats solo by{" "}
+            <strong style={{ color: "var(--accent-ink)" }}>
+              {board.delta >= 0 ? "+" : ""}
+              {Math.round(board.delta * 100)} points
+            </strong>{" "}
+            on this scenario.
+          </p>
           {board.teamDetail?.resolutions?.length ? (
-            <section style={{ ...panel, marginTop: 16 }}>
-              <h2 style={{ fontSize: 16, margin: "0 0 12px" }}>What the team caught</h2>
+            <div style={{ marginTop: 14 }}>
               {board.teamDetail.resolutions.map((r) => (
-                <div key={r.key} style={{ display: "flex", gap: 10, padding: "8px 0", borderTop: "1px solid var(--border)", fontSize: 14 }}>
-                  <span>{r.status === "escalated" ? "⚠️" : "✅"}</span>
-                  <div>
-                    <strong>{r.key}</strong>{" "}
-                    {r.status === "escalated" ? (
-                      <span style={{ color: "var(--warn)" }}>escalated to a human</span>
-                    ) : (
-                      <span style={{ color: "var(--accent)" }}>resolved → '{r.value}'</span>
-                    )}
-                    <div style={{ color: "var(--muted)", fontSize: 13 }}>{r.reason}</div>
-                  </div>
-                </div>
+                <p key={r.key} className={s.proofLine} style={{ marginTop: 6 }}>
+                  {r.status === "escalated" ? "⚠️ " : "✅ "}
+                  <strong>{r.key}</strong>{" "}
+                  {r.status === "escalated" ? "escalated to a human" : `resolved to "${r.value}"`}
+                  {r.reason ? `: ${r.reason}` : ""}
+                </p>
               ))}
-            </section>
+            </div>
           ) : null}
-        </>
+        </div>
       )}
-
-      <footer style={{ color: "var(--muted)", fontSize: 13, marginTop: 28 }}>
-        Traced in <strong>W&B Weave</strong> · project <code>{WEAVE_PROJECT}</code> —{" "}
-        <a href="https://wandb.ai" target="_blank" rel="noreferrer">
-          open dashboard
-        </a>
-        . CLI: <code>pnpm compare</code>, <code>pnpm demo</code>. Scenario is a deterministic
-        stand-in (generic <code>record_*</code> keys); it's replaced by the Content → Critic hero loop next.
-      </footer>
-    </main>
+    </section>
   );
 }
 
-const panel: React.CSSProperties = {
-  background: "var(--panel)",
-  border: "1px solid var(--border)",
-  borderRadius: 12,
-  padding: 20,
-};
-
-function btnStyle(loading: boolean): React.CSSProperties {
-  return {
-    background: "var(--accent)",
-    color: "#06210f",
-    border: 0,
-    borderRadius: 8,
-    padding: "9px 16px",
-    fontSize: 14,
-    fontWeight: 600,
-    cursor: loading ? "wait" : "pointer",
-    whiteSpace: "nowrap",
-  };
-}
-
-function Score({ label, value, tone }: { label: string; value: string; tone: "good" | "bad" }) {
+function ScoreBar({ who, score, kind }: { who: string; score: number; kind: "solo" | "team" }) {
   return (
-    <div style={{ textAlign: "center" }}>
-      <div style={{ color: "var(--muted)", fontSize: 12, textTransform: "uppercase", letterSpacing: 1 }}>{label}</div>
-      <div style={{ fontSize: 40, fontWeight: 800, color: tone === "good" ? "var(--accent)" : "#f87171" }}>{value}</div>
+    <div className={s.proofItem}>
+      <div className={s.proofTop}>
+        <span className={s.proofWho}>{who}</span>
+        <span className={s.proofErr}>{pct(score)}</span>
+      </div>
+      <div className={s.track}>
+        <div className={`${s.fill} ${kind === "team" ? s.fillTeam : s.fillSolo}`} style={{ width: `${score * 100}%` }} />
+      </div>
     </div>
   );
 }
 
-function Column({ title, subtitle, detail }: { title: string; subtitle: string; detail?: RunDetail }) {
+function Chat() {
+  const [messages, setMessages] = useState<ChatMsg[]>(chatSeed);
+  const [input, setInput] = useState("");
+  const [thinking, setThinking] = useState(false);
+  const threadRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, thinking]);
+
+  function ask(text: string) {
+    const q = text.trim();
+    if (!q || thinking) return;
+    setMessages((m) => [...m, { from: "owner", text: q }]);
+    setInput("");
+    setThinking(true);
+    window.setTimeout(() => {
+      setMessages((m) => [...m, { from: "chef", text: replyFor(q) }]);
+      setThinking(false);
+    }, 650);
+  }
+
   return (
-    <section style={panel}>
-      <h2 style={{ fontSize: 16, margin: 0 }}>{title}</h2>
-      <p style={{ color: "var(--muted)", fontSize: 12, margin: "2px 0 14px" }}>{subtitle}</p>
-      {detail ? (
-        <>
-          <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>
-            {detail.correct}/{detail.total} records correct
+    <div className={s.chat}>
+      <div className={s.chatHead}>
+        <span className={s.chefMark}>C</span>
+        <div>
+          <div className={s.chatTitle}>Ask the Chef</div>
+          <div className={s.chatSub}>grounded in your POS, reviews & today</div>
+        </div>
+      </div>
+      <div className={s.thread} ref={threadRef}>
+        {messages.map((m, i) => (
+          <div key={i} className={`${s.msg} ${m.from === "chef" ? s.msgChef : s.msgOwner}`}>
+            {m.from === "chef" && <div className={s.msgFrom}>Chef</div>}
+            {m.text}
           </div>
-          {Object.entries(detail.breakdown).map(([k, v]) => {
-            const wrong = v.startsWith("WRONG");
-            const escalated = v.includes("escalated");
-            return (
-              <div key={k} style={{ display: "flex", gap: 8, padding: "4px 0", fontSize: 13 }}>
-                <span>{wrong ? "❌" : escalated ? "⚠️" : "✅"}</span>
-                <span style={{ minWidth: 78, fontFamily: "ui-monospace, monospace" }}>{k}</span>
-                <span style={{ color: wrong ? "#f87171" : "var(--muted)" }}>{v}</span>
-              </div>
-            );
-          })}
-        </>
-      ) : (
-        <p style={{ color: "var(--muted)", fontSize: 13 }}>no data</p>
-      )}
-    </section>
+        ))}
+        {thinking && (
+          <div className={s.typing} aria-label="Chef is thinking">
+            <span />
+            <span />
+            <span />
+          </div>
+        )}
+      </div>
+      <div className={s.chips}>
+        {suggestions.map((q) => (
+          <button key={q} className={s.chip} onClick={() => ask(q)}>
+            {q}
+          </button>
+        ))}
+      </div>
+      <form
+        className={s.composer}
+        onSubmit={(e) => {
+          e.preventDefault();
+          ask(input);
+        }}
+      >
+        <input
+          className={s.input}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask about tonight…"
+          aria-label="Message the Chef"
+        />
+        <button className={s.send} type="submit" disabled={!input.trim() || thinking}>
+          Send
+        </button>
+      </form>
+    </div>
   );
 }

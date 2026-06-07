@@ -57,7 +57,32 @@ export {
   actualTotalItems,
   trainBefore,
   type Conditions,
+  GROUNDING_TOOLS,
+  getFactsTool,
+  FACTS,
+  factById,
+  type Fact,
 } from "./tools";
+
+// Content → Critic grounding loop (the hero: solo hallucinates, the team's Critic gates).
+export { scoreGrounding, type Claim, type ContentDraft, type GroundingResult, type Ungrounded } from "./grounding";
+export {
+  soloContent,
+  soloGroundedContent,
+  teamContent,
+  CONTENT_ARMS,
+  type ContentArm,
+  type ContentResult,
+  type ContentOptions,
+} from "./content";
+export {
+  runContentEval,
+  DEFAULT_BRIEFS,
+  type ContentScenarioResult,
+  type ContentArmSummary,
+  type ContentEvalResult,
+  type ContentEvalOptions,
+} from "./content-eval";
 
 // PREP station: deterministic naive forecaster + backtest (the SOLO demand baseline).
 export {
