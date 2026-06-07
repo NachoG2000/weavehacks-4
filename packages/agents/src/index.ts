@@ -62,7 +62,34 @@ export {
   FACTS,
   factById,
   type Fact,
+  PURCHASING_TOOLS,
+  requirementsFor,
+  skuById,
+  setPurchaseContext,
 } from "./tools";
+
+// Prep → Purchasing constraint loop (pillar #2: coverage vs budget/shelf-life/case-size).
+export {
+  checkOrder,
+  greedyOrder,
+  greedyPurchase,
+  soloPurchase,
+  teamPurchase,
+  PURCHASE_ARMS,
+  type PurchaseArm,
+  type PurchaseResult,
+  type PurchaseOptions,
+  type OrderCheck,
+  type Violation,
+  type ViolationType,
+} from "./purchasing";
+export {
+  runPurchaseEval,
+  type PurchaseScenarioResult,
+  type PurchaseArmSummary,
+  type PurchaseEvalResult,
+  type PurchaseEvalOptions,
+} from "./purchasing-eval";
 
 // Content → Critic grounding loop (the hero: solo hallucinates, the team's Critic gates).
 export { scoreGrounding, type Claim, type ContentDraft, type GroundingResult, type Ungrounded } from "./grounding";

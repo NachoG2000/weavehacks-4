@@ -18,6 +18,7 @@ export { WEATHER } from "./weather";
 export { FIXTURES } from "./fixtures";
 export { HOLIDAYS } from "./holidays";
 export { EVENTS } from "./events";
+export { SKUS, RECIPES, PURCHASE_SCENARIOS, type Sku, type RecipeLine, type PurchaseScenario } from "./purchasing";
 
 import { ORDERS } from "./orders";
 import { REVIEWS } from "./reviews";

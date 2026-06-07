@@ -15,6 +15,7 @@ export type Station =
   | "historian"
   | "scout"
   | "prep"
+  | "purchasing"
   | "promo"
   | "content"
   | "reviews"
@@ -97,6 +98,18 @@ export const AGENT_ROLES: RoleManifest[] = [
     conflictsWith: [{ with: "human", over: "escalates money/reputation changes for approval" }],
     sensitive: false,
     tier: "hero",
+  },
+  {
+    id: "purchasing",
+    name: "Purchasing",
+    does: "Turns Prep's demand into a feasible supplier order within budget, case-sizes, and shelf-life.",
+    authority: 60,
+    conflictsWith: [
+      { with: "prep", over: "Prep wants full coverage; Purchasing is bounded by budget + shelf-life + supplier minimums" },
+      { with: "human", over: "escalates an order that cannot cover demand within budget" },
+    ],
+    sensitive: true, // spends money → HITL
+    tier: "breadth",
   },
   {
     id: "promo",

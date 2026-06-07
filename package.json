@@ -21,6 +21,8 @@
     "eval": "pnpm --filter @weavehacks/api eval",
     "content": "pnpm --filter @weavehacks/api content",
     "content:eval": "pnpm --filter @weavehacks/api content:eval",
+    "purchasing": "pnpm --filter @weavehacks/api purchasing",
+    "purchasing:eval": "pnpm --filter @weavehacks/api purchasing:eval",
     "demo": "pnpm --filter @weavehacks/api demo",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\" --ignore-path .gitignore"
   },
