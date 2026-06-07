@@ -17,6 +17,25 @@ import { fileURLToPath } from "node:url";
 /** Weather payload is loose for now (the operator's enrichment may grow). */
 export type WeatherInfo = Record<string, unknown> | null;
 
+/**
+ * One enriched event attached to a service (the operator's calendar join). Football entries
+ * carry the competition + clubs, so the Historian can isolate "Champions League nights" etc.
+ * Loose by design — the enrichment may grow; only `type` is relied on.
+ */
+export interface PosEvent {
+  /** "football" | "holiday" | "school" | "commercial" */
+  type: string;
+  name?: string;
+  category?: string;
+  /** football only: e.g. "Ligue 1", "Champions League", "Premier League" */
+  competition?: string;
+  french_club?: string;
+  marquee_club?: string;
+  time?: string;
+  impact?: string | null;
+  [key: string]: unknown;
+}
+
 /** One service (lunch or dinner) on one day. */
 export interface ServiceRecord {
   /** ISO date, e.g. "2023-06-02" */
@@ -48,7 +67,7 @@ export interface ServiceRecord {
   is_holiday: boolean;
   is_commercial_event: boolean;
   football_count: number;
-  events: string[];
+  events: PosEvent[];
 }
 
 /** Default location for the operator's JSON (override with POS_DATA_PATH). */

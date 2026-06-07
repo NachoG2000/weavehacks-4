@@ -1,4 +1,11 @@
-export { HISTORY_TOOLS, demandBaselineTool, demandByConditionTool, ordersOnTool } from "./history";
+export {
+  HISTORY_TOOLS,
+  baselineDemandTool,
+  effectOfFootballTool,
+  effectOfWeatherTool,
+  effectOfCalendarTool,
+  serviceOnTool,
+} from "./history";
 export {
   REALTIME_TOOLS,
   MENU_TOOLS,
@@ -8,4 +15,24 @@ export {
   getEventsTool,
   getMenuTool,
 } from "./realtime";
-export { demandBaseline, demandByCondition, ordersOn } from "./analytics";
+export {
+  baselineDemand,
+  baselineDay,
+  footballEffect,
+  weatherEffect,
+  calendarEffect,
+  serviceOn,
+  COMPETITIONS,
+  POS_INFO,
+  // eval / holdout support
+  setAsOf,
+  getAsOf,
+  dataRange,
+  holdoutCutoff,
+  holdoutServices,
+  conditionsOf,
+  conditionsSentence,
+  actualTotalItems,
+  trainBefore,
+  type Conditions,
+} from "./pos-analytics";

@@ -38,11 +38,19 @@ export const STATIONS: Record<"chef" | "historian" | "scout" | "prep", StationCo
     id: "historian",
     name: "Historian",
     instructions:
-      "You are the Historian. You know the restaurant's PAST. Use your tools to ground every claim: " +
-      "demand_baseline for the typical night of a weekday, demand_by_condition to see how weather / " +
-      "games / holidays moved demand historically, orders_on to spot-check a date. Report a per-item " +
-      "baseline for the requested weekday. When told today's specific conditions, pull the matching " +
-      "conditional history and refine. State the dish ids and numbers you found. " +
+      "You are the Historian. You read the restaurant's REAL POS history (3 years of services) and you " +
+      "reason like an operator thinking out loud: start from a BASE RATE, then add ONE adjustment per " +
+      "atypical factor, each its OWN query, then do the arithmetic.\n" +
+      "WORKFLOW:\n" +
+      "1. baseline_demand(day, service) → the typical night (avg items + per-category breakdown + sample size n).\n" +
+      "2. For EACH atypical condition you're told about, query its effect SEPARATELY — one tool call per factor:\n" +
+      "   • a match tonight → effect_of_football (pass competition if it's named, e.g. Champions League)\n" +
+      "   • rain / snow / heat / cold → effect_of_weather\n" +
+      "   • a holiday / school break / commercial event → effect_of_calendar\n" +
+      "   Each returns how much THAT ONE factor moved demand historically (± items, which categories move) and n.\n" +
+      "3. Sum it: report base ± factor1 ± factor2 … = expected, and call out which categories shift.\n" +
+      "4. ALWAYS cite n. If a factor is flagged unreliable (small sample), say the signal is weak and don't lean on it. " +
+      "The effects are marginal (measured one at a time), so the total is an ESTIMATE, not a joint prediction — say so. " +
       GROUNDING,
     tools: HISTORY_TOOLS,
   },
@@ -63,12 +71,13 @@ export const STATIONS: Record<"chef" | "historian" | "scout" | "prep", StationCo
     id: "prep",
     name: "Prep",
     instructions:
-      "You are Prep — the head prep cook. You produce ONE concrete prep sheet: a quantity per menu " +
-      "item for the target night. You are handed the Historian's baseline + conditional history and " +
-      "the Scout's read of today. RECONCILE them: start from the baseline, then adjust for each of " +
-      "today's conditions, justifying every number by a tool result or a grounded claim from another " +
-      "station. Use get_menu for valid item ids and demand_by_condition to check your adjustments. " +
-      "For each item, show: baseline → adjusted, and a one-line reason. Call out any big swing. " +
+      "You are Prep — the head prep cook. You produce ONE concrete prep sheet for the target night, by " +
+      "category and key item. You are handed the Historian's base rate + per-factor effects and the Scout's " +
+      "read of today. RECONCILE them: start from the base rate, then apply each of the Historian's grounded " +
+      "± adjustments for today's conditions, justifying every number by a tool result or a station's grounded " +
+      "claim. Use get_menu for valid items; use baseline_demand and the effect_of_* tools to check any " +
+      "adjustment yourself. For each category/item show: base → adjusted, and a one-line reason. Call out any " +
+      "big swing (waste or stockout risk). " +
       GROUNDING,
     tools: [...MENU_TOOLS, ...HISTORY_TOOLS],
   },

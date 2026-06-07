@@ -70,14 +70,14 @@ async function runFridayPrepInner(opts: DiscussionOptions): Promise<DiscussionRe
     "delegates to Historian + Scout, then Prep",
   );
 
-  // 1 — Historian: the naive baseline for this weekday.
+  // 1 — Historian: the base rate for this weekday's dinner.
   const hist = record(
     await runStation(
       "historian",
-      `Give the per-item baseline for a typical ${weekday} (day-of-week ${dow}). Use demand_baseline (and orders_on to spot-check if useful). List dish ids and the average quantities you found.`,
+      `Give the BASE RATE for a typical ${weekday}. Call baseline_demand(day="${weekday.toLowerCase()}") with NO service to get lunch AND dinner separated. Report avg orders + items for each service, the dinner per-category breakdown, and the sample size (n). We're prepping dinner, so anchor on the dinner numbers.`,
       opts,
     ),
-    "baseline for a typical " + weekday,
+    "base rate for a typical " + weekday,
   );
 
   // 2 — Scout: what's atypical about today.
@@ -90,14 +90,14 @@ async function runFridayPrepInner(opts: DiscussionOptions): Promise<DiscussionRe
     "today's real-world conditions",
   );
 
-  // 3 — Historian REACTS: refine against the Scout's conditions (the discussion beat).
+  // 3 — Historian REACTS: quantify each atypical factor separately, then sum (the discussion beat).
   const histRefine = record(
     await runStation(
       "historian",
-      `The Scout reports for ${date}:\n\n${scout.text}\n\nNow pull the MATCHING conditional history with demand_by_condition (e.g. rainy ${weekday}s, past match nights) and refine your per-item expectation for THIS night. Explicitly note where it differs from your naive baseline above.`,
+      `The Scout reports for ${date}:\n\n${scout.text}\n\nNow quantify EACH atypical factor SEPARATELY with one tool call apiece (effect_of_football — pass the competition if named — effect_of_weather, effect_of_calendar), each over many past dinners. Then do the math: base ± each factor's effect = expected total and the categories that shift. Cite the sample size behind every ±, flag any weak (small-sample) signal, and note where this lands vs your base rate above.`,
       opts,
     ),
-    "refines baseline using Scout's conditions",
+    "quantifies each factor, sums onto the base rate",
   );
 
   // 4 — Prep reconciles everything into one prep sheet.

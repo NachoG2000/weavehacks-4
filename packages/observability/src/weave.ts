@@ -35,6 +35,21 @@ export function isWeaveActive(): boolean {
 }
 
 /**
+ * Flush pending uploads to W&B. The client batches calls and uploads asynchronously, so a
+ * short-lived CLI that calls process.exit() right after its work can cut off the final batch
+ * (e.g. an Evaluation never lands in the Evals tab). Await this before exiting. Best-effort.
+ */
+export async function flushWeave(): Promise<void> {
+  if (!active) return;
+  try {
+    const c: any = client ?? (weave as any).getGlobalClient?.();
+    if (c && typeof c.waitForBatchProcessing === "function") await c.waitForBatchProcessing();
+  } catch {
+    /* best-effort — never block exit on a flush error */
+  }
+}
+
+/**
  * Wrap a function as a traced Weave op. Instrument EVERY agent call and EVERY
  * conflict resolution with this. Wrapping is lazy (on first call) so ops can be
  * declared before initWeave() runs; if Weave is inactive it just calls through.

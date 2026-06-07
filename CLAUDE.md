@@ -53,10 +53,15 @@ Weave trace."* Keep `pnpm compare` runnable after every change.
 
 > Current state: the **Brigade discussion team is live** (`pnpm prep`) — real LLM agents
 > (Chef/Historian/Scout/Prep) coordinating on a "prep for Friday" turn over W&B Inference, with
-> tools + every turn traced in Weave. The numeric **solo-vs-team eval** over this team is the next
-> step (deferred for now); until then the `compare`/`demo` scoreboard runs on a deterministic
-> stand-in scenario (`apps/api/src/scenario.ts`, generic `record_*`) so the harness stays green.
-> When we wire the eval, `compareSoloVsTeam` does NOT change — only the scenario plugged in does.
+> tools + every turn traced in Weave. The numeric **solo-vs-team eval is now real** (`pnpm eval`):
+> it holds out the last N weeks of the real POS export, hides them from every history tool via an
+> **as-of leakage guard**, has a solo agent (all tools, one shot) and the team (Historian grounds
+> base+per-factor deltas → Prep reconciles) each predict the held-out services, and scores both
+> against what ACTUALLY happened — objective MAE/sMAPE, no LLM judge. `pnpm eval` (no args) runs
+> the FREE deterministic naive baseline; `pnpm eval all` adds the credit-spending solo/team arms.
+> Each arm is logged as a Weave **Evaluation** (compare side-by-side in the Evals tab). The
+> deterministic `compare`/`demo` stand-in (`apps/api/src/scenario.ts`) stays green/free for the
+> always-runnable scoreboard; `compareSoloVsTeam` is unchanged.
 
 ---
 
@@ -120,7 +125,9 @@ Each agent's role + its conflict/dependency live as data in `packages/agents/src
 > (`packages/agents/src/tools/`), driven by the runtime's chat-completions tool loop
 > (`runToolAgent`, model-agnostic). Every tool call is a Weave op, so each claim is traceable to
 > the exact query that grounded it. The Scout's tools are the four realtime signals (weather,
-> games, holidays, events); the Historian's are the POS analytics (baseline + by-condition).
+> games, holidays, events); the Historian's are POS analytics over the REAL `pos.json` export —
+> a base-rate query plus one isolated marginal-effect query per factor (football/weather/
+> calendar), each carrying its sample size `n` so confidence is visible.
 
 ## SELF-IMPROVEMENT (3 layers — Layer 1 is the hero, 2 and 3 are bonus)
 
@@ -195,6 +202,8 @@ pnpm seed         # load + validate the curated seed slice (no LLM, no credits)
 pnpm prep         # ⭐ the Brigade discussion: Chef→Historian+Scout→Prep, live (real LLMs, traced)
 pnpm baseline     # run the SOLO agent alone (deterministic stand-in scenario)
 pnpm compare      # the stand-in scoreboard: solo vs team, numeric delta (also: GET /compare)
+pnpm eval         # ⭐ REAL solo-vs-team forecast eval on a recent holdout (no args = FREE naive;
+                  #   'pnpm eval all' adds solo+team LLM arms; logs Weave Evaluations to compare)
 pnpm demo         # narrated stand-in demo: catch contradiction → resolve/escalate → the number
 pnpm ask "..."    # one-off free-form prompt through the configured runtime (spends credits)
 pnpm --filter @weavehacks/api models       # list runtime model ids your key can use
@@ -230,7 +239,8 @@ build step — `tsx` runs the api, Next transpiles the web).
   OpenAI Agents SDK path. `describeRuntime()` reports config without spending credits.
 - **`packages/agents`** — **DOMAIN lives here.** `roles.ts` is the manifest (authority + required
   conflict per role). `tools/` are the parameterized, Weave-traced tools agents call —
-  `history.ts` (POS analytics: baseline, by-condition) + `realtime.ts` (the four signals + menu).
+  `history.ts` (Historian POS tools over the real export: base rate + isolated marginal effects,
+  in `pos-analytics.ts`) + `realtime.ts` (the four signals + menu).
   `stations.ts` defines the four LLM agents (Chef/Historian/Scout/Prep) on `runToolAgent`.
   `discussion.ts` = `runFridayPrep()`, the coordination loop (one Weave span). Content/Critic/
   Promo/Reviews/Forge are next.

@@ -34,12 +34,29 @@ export {
   getHolidaysTool,
   getEventsTool,
   getMenuTool,
-  demandBaselineTool,
-  demandByConditionTool,
-  ordersOnTool,
-  demandBaseline,
-  demandByCondition,
-  ordersOn,
+  baselineDemandTool,
+  effectOfFootballTool,
+  effectOfWeatherTool,
+  effectOfCalendarTool,
+  serviceOnTool,
+  baselineDemand,
+  baselineDay,
+  footballEffect,
+  weatherEffect,
+  calendarEffect,
+  serviceOn,
+  COMPETITIONS,
+  POS_INFO,
+  setAsOf,
+  getAsOf,
+  dataRange,
+  holdoutCutoff,
+  holdoutServices,
+  conditionsOf,
+  conditionsSentence,
+  actualTotalItems,
+  trainBefore,
+  type Conditions,
 } from "./tools";
 
 // PREP station: deterministic naive forecaster + backtest (the SOLO demand baseline).
@@ -52,3 +69,23 @@ export {
   type ProductPrediction,
   type BacktestMetrics,
 } from "./prep";
+
+// Forecasters (naive/solo/team) + the solo-vs-team holdout eval.
+export {
+  naiveForecastValue,
+  soloForecast,
+  teamForecast,
+  extractTotal,
+  type ForecastQ,
+  type ForecastValue,
+} from "./forecasters";
+export {
+  runForecastEval,
+  pickScenarios,
+  type Arm,
+  type EvalScenario,
+  type ScenarioResult,
+  type ArmSummary,
+  type ForecastEvalResult,
+  type ForecastEvalOptions,
+} from "./forecast-eval";
